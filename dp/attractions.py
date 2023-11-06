@@ -24,27 +24,47 @@ def main():
         quit()
 
     #we first need to load the txt file into memory
+    #we'll use dictionaries because they're easier to read
     attractions = []
     fi = open(argv[1], "r")
     for line in fi:
-        line = line.replace("\n", "") #strings are immutable in Python
-        entry = line.split(" ")[:2]
-        entry[1] = int(entry[1])
+        line = line.replace("\n", "").split(" ")[:2] #strings are immutable in Python
+        entry = {"name": line[0], "cost":int(line[1])}
         attractions.append(entry)
-    
+      
     #algorithm
-    cost = [0]*len(attractions)
-    cost[0] = (attractions[0][1], 0)
-    cost[1] = (attractions[1][1], 0)
-    for i in range(2, len(attractions)):
-        if attractions[i][1] + cost[i-2][0] < cost[i-1][0]:
-            cost[i] = (attractions[i][1]+cost[i-2][0], i-2)
-        else:
-            cost[i] = (cost[i-1][0], i-1)
-            
-    print(attractions)
-    print(cost)
     
+    highest_costs = [0]*len(attractions)
+    #notice that the minimalis cost of visiting every attraction 
+    #is the difference between the maximal cost of missing
+    #every possible attraction and the total cost
+    highest_costs[0] = (attractions[0]["cost"], -1)
+    highest_costs[1] = (attractions[1]["cost"], -1)
+    total_cost = attractions[0]["cost"] + attractions[1]["cost"]
+    for i in range(2, len(attractions)):
+        (prevCost, prev) = highest_costs[i-1]
+        (prevPrevCost, prevPrev) = highest_costs[i-2]
+        if attractions[i]["cost"] + prevPrevCost > prevCost:
+            highest_costs[i] = (attractions[i]["cost"]+prevPrevCost, i-2)
+        else:
+            highest_costs[i] = (prevCost, i-1)
+        total_cost += attractions[i]["cost"]
+
+    
+    
+    #This is the list of the most expensive, skippable attractions
+    #We'll just need to trim it so that it is less than or equal to k
+    
+    # expensive_attractions
+    expensive_attractions = [attractions[-1]]
+    (prevCost, prev) = highest_costs[-1]
+    while prev > -1:
+        expensive_attractions.append(attractions[prev])
+        (prevCost, prev) = highest_costs[prev]
+    print(attractions)
+    print(highest_costs)
+    print(total_cost - highest_costs[-1][0])
+    print(expensive_attractions)
     
 
 if __name__ == "__main__":
